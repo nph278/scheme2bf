@@ -39,12 +39,41 @@
     <script>
       window.onload = () => {
           const history_limit = 10;
+          const code_input = document.getElementById("code_input");
+          const code_display = document.getElementById("code_display");
+          const data_display = document.getElementById("data_display");
 
           let code;
           let save;
           let history;
           let state; 
           let running;
+
+          const reset = () => {
+              const default_state = {code_pos: [], data: [0], data_pos: 0};
+
+              code = parse(code_input.value);
+              save = default_state;
+              history = [];
+              state = default_state;
+              running = false;
+
+              console.log(code);
+
+              update();
+          }
+
+          const update = () => {
+              const s = sanitized_code();
+
+              if (state.code_pos.length === 0) {
+                  code_display.innerHTML = s;
+              } else {
+                  console.error(1);
+              }
+
+
+          }
 
           const parse = (s) => {
               let tokens = [];
@@ -75,20 +104,8 @@
               return tree;
           }
 
-          const update = () => {}
-
-          const reset = () => {
-              const default_state = {code_pos: [], data: [0], data_pos: 0};
-
-              code = parse(document.getElementById("code_input").value);
-              save = default_state;
-              history = [];
-              state = default_state;
-              running = false;
-
-              console.log(code);
-
-              update();
+          const sanitized_code = () => {
+              return code_input.value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
           }
 
           reset();
