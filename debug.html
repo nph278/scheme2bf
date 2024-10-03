@@ -72,7 +72,19 @@
                   console.error(1);
               }
 
+              let d = state.data.map(n => {
+                  const a = n.toString();
+                  if (a.length === 3) {
+                      return a;
+                  } else if (a.length === 2) {
+                      return "0" + a;
+                  } else {
+                      return "00" + a;
+                  }
+              });
+              d[state.data_pos] = "<strong>" + d[state.data_pos] + "</strong>";
 
+              data_display.innerHTML = d.join(" ");
           }
 
           const parse = (s) => {
