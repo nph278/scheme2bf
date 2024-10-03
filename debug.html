@@ -19,12 +19,14 @@
       }
 
       pre strong {
-          color: #f01040;
+          background: #f01040;
+          color: #000000;
       }
     </style>
   </head>
   <body>
     <textarea id="code_input"></textarea>
+    <textarea id="text_input"></textarea>
     <p id="buttons">
       <button id="reset">reset</button>
       <button id="step">step</button>
@@ -36,41 +38,37 @@
     </p>
     <pre id="code_display"></pre>
     <pre id="data_display"></pre>
+    <pre id="output_display"></pre>
     <script>
       window.onload = () => {
           const history_limit = 10;
           const code_input = document.getElementById("code_input");
+          const text_input = document.getElementById("text_input");
           const code_display = document.getElementById("code_display");
           const data_display = document.getElementById("data_display");
+          const output_display = document.getElementById("output_display");
 
-          let code;
           let save;
           let history;
           let state; 
           let running;
 
           const reset = () => {
-              const default_state = {code_pos: [], data: [0], data_pos: 0};
+              const default_state = {node: parse(code_input.value), data: [0], data_pos: 0, output: ""};
 
-              code = parse(code_input.value);
               save = default_state;
               history = [];
               state = default_state;
               running = false;
 
-              console.log(code);
-
+              console.log(state);
               update();
           }
 
           const update = () => {
               const s = sanitized_code();
 
-              if (state.code_pos.length === 0) {
-                  code_display.innerHTML = s;
-              } else {
-                  console.error(1);
-              }
+              code_display.innerHTML = s;
 
               let d = state.data.map(n => {
                   const a = n.toString();
@@ -85,6 +83,8 @@
               d[state.data_pos] = "<strong>" + d[state.data_pos] + "</strong>";
 
               data_display.innerHTML = d.join(" ");
+
+              output_display.innerText = state.output;
           }
 
           const parse = (s) => {
@@ -99,29 +99,47 @@
               }
               console.log(Array.from(tokens));
 
-              return parse_inner(tokens);
+              const children = parse_inner(tokens);
+              const parent = {type: "]", pos: -1, children};
+              for (let i = 0; i < children.length; i++) {
+                  children[i].parent = parent;
+              }
+              return parent;
           }
 
           const parse_inner = (tokens) => {
-              let tree = [];
+              let nodes = [];
               while (tokens.length > 0 && tokens[0].token !== "]") {
                   const t = tokens.shift();
                   if (t.token === "[") {
-                      tree.push({ins: parse_inner(tokens), pos: t.pos});
+                      const children = parse_inner(tokens);
+                      const parent = {type: "[", pos: t.pos, children};
+                      nodes.push(parent);
+                      for (let i = 0; i < children.length; i++) {
+                          children[i].parent = parent;
+                      }
                       tokens.shift();
                   } else {
-                      tree.push({ins: t.token, pos: t.pos});
+                      nodes.push({type: t.token, pos: t.pos});
                   }
               }
-              return tree;
+              return nodes;
           }
 
           const sanitized_code = () => {
               return code_input.value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
           }
 
+          const step = () => {
+              history.push(structuredClone(state));
+              if (history.length > history_limit) {
+                  history.shift();
+              }
+          }
+
           reset();
           document.getElementById("reset").onclick = reset;
+          document.getElementById("step").onclick = step;
       }
     </script>
   </body>
