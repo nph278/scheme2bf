@@ -48,17 +48,13 @@
           const data_display = document.getElementById("data_display");
           const output_display = document.getElementById("output_display");
 
-          let save;
-          let history;
+          let save = null;
+          let history = [];
           let state; 
           let running;
 
           const reset = () => {
-              const default_state = {node: parse(code_input.value), data: [0], data_pos: 0, output: ""};
-
-              save = default_state;
-              history = [];
-              state = default_state;
+              state = {node: parse(code_input.value), data: [0], data_pos: 0, output: ""};
               running = false;
 
               console.log(state);
@@ -100,7 +96,7 @@
               console.log(Array.from(tokens));
 
               const children = parse_inner(tokens);
-              const parent = {type: "]", pos: -1, children};
+              const parent = {type: "]", pos: -1, children, index: 0};
               for (let i = 0; i < children.length; i++) {
                   children[i].parent = parent;
               }
@@ -113,7 +109,7 @@
                   const t = tokens.shift();
                   if (t.token === "[") {
                       const children = parse_inner(tokens);
-                      const parent = {type: "[", pos: t.pos, children};
+                      const parent = {type: "[", pos: t.pos, children, index: 0};
                       nodes.push(parent);
                       for (let i = 0; i < children.length; i++) {
                           children[i].parent = parent;
@@ -130,11 +126,50 @@
               return code_input.value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
           }
 
+          const next_node = () => {
+              while (true) {
+                  if ("children" in state.node && state.node.index < state.node.children.length) {
+                      state.node = state.node.children[state.node.index];
+                      return;
+                  } else if (state.node.type === "]") {
+                      return;
+                  } else {
+                      state.node = state.node.parent;
+                      state.node.index++;
+                  }
+              }
+          }
+
           const step = () => {
               history.push(structuredClone(state));
               if (history.length > history_limit) {
                   history.shift();
               }
+
+              if (state.node.type === "]") {
+                  if (state.node.index < state.node.children.length) {
+                      state.node = state.node.children[state.node.index];
+                  }
+              } else if (state.node.type === "+") {
+                  state.data[state.data_pos]++;
+                  state.data[state.data_pos] %= 256;
+                  next_node();
+              } else if (state.node.type === "-") {
+                  state.data[state.data_pos] += 255;
+                  state.data[state.data_pos] %= 256;
+                  next_node();
+              } else if (state.node.type === "<") {
+                  state.data_pos--;
+                  next_node();
+              } else if (state.node.type === ">") {
+                  state.data_pos++;
+                  if (state.data_pos === state.data.length) {
+                      state.data.push(0);
+                  }
+                  next_node();
+              }
+
+              update();
           }
 
           reset();
