@@ -29,7 +29,7 @@
       <textarea id="code_input"></textarea>
       <textarea id="text_input"></textarea>
     </div>
-    <div id="buttons">
+    <div id="controls">
       <button id="reset">reset</button>
       <button id="step">step</button>
       <button id="back">back</button>
@@ -55,12 +55,14 @@
           let save = null;
           let history = [];
           let code;
+          let input;
           let state; 
           let running;
 
           const reset = () => {
               code = code_input.value;
-              state = {node: parse(code), data: [0], data_pos: 0, output: ""};
+              input = text_input.value;
+              state = {node: parse(code), data: [0], data_pos: 0, output: "", input_pos: 0};
               running = false;
 
               update();
@@ -104,6 +106,7 @@
 
               const children = parse_inner(tokens);
               const parent = {type: null, pos: -1, children, index: 0};
+              parent.parent = parent; // words
               for (let i = 0; i < children.length; i++) {
                   children[i].parent = parent;
               }
@@ -133,18 +136,6 @@
               return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
           }
 
-          const next_node = () => {
-              state.node = state.node.parent;
-              state.node.index++;
-              while ("children" in state.node) {
-                  if (state.node.index < state.node.children.length) {
-                      state.node = state.node.children[state.node.index];
-                  } else {
-                      break;
-                  }
-              }
-          }
-
           const step = () => {
               history.push(structuredClone(state));
               if (history.length > history_limit) {
@@ -154,32 +145,58 @@
               if (state.node.type === "+") {
                   state.data[state.data_pos]++;
                   state.data[state.data_pos] %= 256;
-                  next_node();
               } else if (state.node.type === "-") {
                   state.data[state.data_pos] += 255;
                   state.data[state.data_pos] %= 256;
-                  next_node();
               } else if (state.node.type === "<") {
-                  state.data_pos--;
-                  next_node();
+                  state.data_pos--
+              } else if (state.node.type === ",") {
+                  if (state.input_pos >= input.length) {
+                      state.data[state.data_pos] = 0;
+                  } else {
+                      state.data[state.data_pos] = input.charCodeAt(state.input_pos);
+                      state.input_pos++;
+                  }
+              } else if (state.node.type === ".") {
+                  state.output = state.output + String.fromCharCode(state.data[state.data_pos]);
               } else if (state.node.type === ">") {
                   state.data_pos++;
                   if (state.data_pos === state.data.length) {
                       state.data.push(0);
                   }
-                  next_node();
               } else if (state.node.type === "[") {
+                  if (state.data[state.data_pos] > 0) {
+                      state.node.index = 0;
+                  }
               } else if (state.node.type === "!") {
                   running = false;
-                  next_node();
               }
 
+              if (!(("children" in state.node) && (state.node.index < state.node.children.length))) {
+                  state.node = state.node.parent;
+                  state.node.index++;
+              }
+              while ("children" in state.node) {
+                  if (state.node.index < state.node.children.length) {
+                      state.node = state.node.children[state.node.index];
+                  } else {
+                      break;
+                  }
+              }
               update();
           }
 
           reset();
           document.getElementById("reset").onclick = reset;
           document.getElementById("step").onclick = step;
+          document.getElementById("run").onclick = () => {running = true};
+          document.getElementById("stop").onclick = () => {running = false};
+
+          setInterval(() => {
+              if (running) {
+                  step();
+              }
+          }, 100);
       }
     </script>
   </body>
