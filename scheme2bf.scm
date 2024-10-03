@@ -2,8 +2,8 @@
 
 ;; COMPILER
 
-(define (compile l0)
-  (let* ((bf (l0s->bf l0)))
+(define (compile l0s)
+  (let* ((bf (l0s->bf l0s)))
     bf))
 
 ;; L0: SIMPLE BYTE TAPE
