@@ -1,13 +1,23 @@
 (use-modules (srfi srfi-1)
              (srfi srfi-26))
 
-;; l0: SIMPLE BYTE TAPE
+
+;; COMPILER
+
+
+(define (compile l0)
+  (let* ((bf (l0s->bf l0)))
+    bf))
+
+
+;; L0: SIMPLE BYTE TAPE
 ;;
 ;; move n       -- Move right n cells. If negative, move left.
 ;; add n/char   -- Add n to current cell, or char's code.
 ;; reset        -- Reset current cell to 0. More performant on lower (<128) cells.
 ;; reset-up     -- Reset current cell to 0. More performant on higher (>127) cells.
 ;; loop . exprs -- Loop expressions while current cell is not 0.
+
 
 (define (l0->bf expr)
   (cond ((not (list? expr)) (error "l0 ERROR: non-list instruction"))
@@ -45,9 +55,8 @@
       (make-string (- n) #\<)))
 
 
-(define (compile l0)
-  (let* ((bf (l0s->bf l0)))
-    bf))
+;; CLI
+
 
 (define example '((add 254) (move 10) (move -10) (reset) (reset-up)))
 (display (compile example))
