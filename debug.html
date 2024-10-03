@@ -70,9 +70,10 @@
           }
 
           const update = () => {
-              const s = sanitize(code);
-
-              code_display.innerHTML = s;
+              code_display.innerHTML =
+                  code.substring(0, state.node.pos) +
+                  "<strong>" + code[state.node.pos] + "</strong>" +
+                  code.substring(state.node.pos + 1, code.length);
 
               let d = state.data.map(n => {
                   const a = n.toString();
