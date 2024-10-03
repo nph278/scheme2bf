@@ -5,16 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>BF Simulator</title>
+    <style>
+      html {
+          background: #202040;
+      }
+
+      pre {
+          display: block;
+          background: #000000;
+          color: #ffffff;
+          padding: 1em;
+          font-size: 150%;
+      }
+
+      pre strong {
+          color: #f01040;
+      }
+    </style>
   </head>
   <body>
-    <textarea id="code"></textarea>
-    <p>
+    <textarea id="code_input"></textarea>
+    <p id="buttons">
+      <button id="reset">reset</button>
       <button id="step">step</button>
       <button id="back">back</button>
       <button id="run">run</button>
       <button id="stop">stop</button>
-      <button id="reset">reset</button>
+      <button id="save">save</button>
+      <button id="load">load</button>
     </p>
-    <script src="index.js"></script>
+    <pre id="code_display"></pre>
+    <pre id="data_display"></pre>
+    <script>
+      window.onload = () => {
+          const history_limit = 10;
+
+          let code;
+          let save;
+          let history;
+          let state; 
+          let running;
+
+          const parse = (s) => {
+              let tokens = [];
+              let string_pos = 0;
+              while (s.length > string_pos) {
+                  const c = s[string_pos];
+                  if ("+-<>[],.".includes(c)) {
+                      tokens.push({token: c, pos: string_pos});
+                  }
+                  string_pos++;
+              }
+              console.log(Array.from(tokens));
+
+              return parse_inner(tokens);
+          }
+
+          const parse_inner = (tokens) => {
+              let tree = [];
+              while (tokens.length > 0 && tokens[0].token !== "]") {
+                  const t = tokens.shift();
+                  if (t.token === "[") {
+                      tree.push({ins: parse_inner(tokens), pos: t.pos});
+                      tokens.shift();
+                  } else {
+                      tree.push({ins: t.token, pos: t.pos});
+                  }
+              }
+              return tree;
+          }
+
+          const update = () => {}
+
+          const reset = () => {
+              const default_state = {code_pos: [], data: [0], data_pos: 0};
+
+              code = parse(document.getElementById("code_input").value);
+              save = default_state;
+              history = [];
+              state = default_state;
+              running = false;
+
+              console.log(code);
+
+              update();
+          }
+
+          reset();
+          document.getElementById("reset").onclick = reset;
+      }
+    </script>
   </body>
 </html>
