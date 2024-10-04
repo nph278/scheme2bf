@@ -2,13 +2,12 @@
 
 ;; L0: SIMPLE BYTE TAPE
 ;;
-;; move n       -- Move right n bytes. If negative, move left.
-;; add n/char   -- Add n to current byte, or char's code.
-;; reset        -- Reset current byte to 0. More performant on lower (<128) bytes.
-;; reset-up     -- Reset current byte to 0. More performant on higher (>127) bytes.
-;; input        -- Input to current byte.
-;; output       -- Output current byte.
-;; loop . exprs -- Loop expressions while current byte is not 0.
+;; move n        -- Move right n bytes. If negative, move left.
+;; add n/char    -- Add n to current byte, or char's code.
+;; reset         -- Reset current byte to 0. More performant on lower (<128) bytes.
+;; input         -- Input to current byte.
+;; output        -- Output current byte.
+;; while . exprs -- Loop expressions while current byte is not 0.
 
 (define (make-l0)
   (define (bf-number n)
@@ -37,29 +36,59 @@
                                 (else (error "l0 ERROR: invalid move instruction argument type"))))
                   ((reset) (cond ((not (nil? (drop expr 1))) (error "l0 ERROR: too many arguments in reset instruction"))
                                  (else "[-]")))
-                  ((reset-up) (cond ((not (nil? (drop expr 1))) (error "l0 ERROR: too many arguments in reset-up instruction"))
-                                    (else "[+]")))
                   ((input) (cond ((not (nil? (drop expr 1))) (error "l0 ERROR: too many arguments in input instruction"))
                                  (else ",")))
                   ((output) (cond ((not (nil? (drop expr 1))) (error "l0 ERROR: too many arguments in output instruction"))
                                   (else ".")))
-                  ((loop) (string-append "[" (compile (drop 1 expr)) "]"))
+                  ((while) (string-append "[" (compile (drop expr 1)) "]"))
                   (else (error "l0 ERROR: unknown instruction" (first expr)))))))
 
   (define (compile exprs)
     (apply string-append (map compile-one exprs)))
 
-  `((compile . ,compile)))
+  (define (optimize exprs)
+    (let loop ((left '((_)))
+               (right exprs))
+      (define (part position argument)
+        (list-ref (list-ref right position) argument))
+      (define (loop-stay new-right start)
+        (loop left (append new-right (drop right start))))
+      (define (loop-back new-right start)
+        (loop (drop left 1) (append `(,(first left)) new-right (drop right start))))
+      (cond ((nil? right)
+             (drop (reverse left) 1))
+            ((eq? (part 0 0) 'while)
+             (loop `((while . ,(optimize (drop (first right) 1))) . ,left) (drop right 1)))
+            ((and (eq? (part 0 0) 'add) (= (part 0 1) 0))
+             (loop-back '() 1))
+            ((and (eq? (part 0 0) 'move) (= (part 0 1) 0))
+             (loop-back '() 1))
+            ((nil? (drop right 1))
+             (drop (reverse `(,(first right) . ,left)) 1))
+            ((and (eq? (part 0 0) 'add) (eq? (part 1 0) 'add))
+             (loop-stay `((add ,(+ (part 0 1) (part 1 1)))) 2))
+            ((and (eq? (part 0 0) 'move) (eq? (part 1 0) 'move))
+             (loop-stay `((move ,(+ (part 0 1) (part 1 1)))) 2))
+            ((and (or (eq? (part 0 0) 'add)
+                      (eq? (part 0 0) 'reset))
+                  (eq? (part 1 0) 'reset))
+             (loop-back '() 1))
+            (else
+             (loop `(,(first right) . ,left) (drop right 1))))))
+
+  `((compile . ,compile)
+    (optimize . ,optimize)))
 
 ;; COMPILER
 
 (define l0 (make-l0))
 (define (compile expr)
-  (let* ((expr ((cdr (assoc 'compile l0)) expr)))
+  (let* ((expr ((cdr (assoc 'optimize l0)) expr))
+         (expr ((cdr (assoc 'compile l0)) expr)))
     expr))
 
 ;; CLI
 
-(define example '((add 254) (move 10) (move -10) (input) (output) (reset) (reset-up)))
+(define example '((add 1) (move 10) (move -10) (add -2) (while (input) (add 10) (reset) (add -5) (output)) (input) (output) (reset) (reset)))
 (display (compile example))
 (newline)
