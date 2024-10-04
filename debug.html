@@ -75,17 +75,24 @@
                   "<strong>" + code[state.node.pos] + "</strong>" +
                   code.substring(state.node.pos + 1, code.length);
 
+              let counter = 0;
               let d = state.data.map(n => {
-                  const a = n.toString();
-                  if (a.length === 3) {
-                      return a;
-                  } else if (a.length === 2) {
-                      return "0" + a;
-                  } else {
-                      return "00" + a;
+                  let a = n.toString();
+                  if (a.length < 3) {
+                      a = "0" + a;
                   }
+                  if (a.length < 3) {
+                      a = "0" + a;
+                  }
+                  if (counter === state.data_pos) {
+                      a = "<strong>" + a + "</strong>";
+                  }
+                  if (counter % 4 === 0) {
+                      a = "<br/>" + a;
+                  }
+                  counter++;
+                  return a;
               });
-              d[state.data_pos] = "<strong>" + d[state.data_pos] + "</strong>";
 
               data_display.innerHTML = d.join(" ");
 
