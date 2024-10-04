@@ -3,7 +3,7 @@
 ;; L0: SIMPLE BYTE TAPE
 ;;
 ;; move n        -- Move right n bytes. If negative, move left.
-;; add n/char    -- Add n to current byte, or char's code.
+;; add n         -- Add n to current byte.
 ;; reset         -- Reset current byte to 0. More performant on lower (<128) bytes.
 ;; input         -- Input to current byte.
 ;; output        -- Output current byte.
@@ -28,7 +28,6 @@
                   ((add) (cond ((nil? (drop expr 1)) (error "l0 ERROR: empty add instruction"))
                                ((not (nil? (drop expr 2))) (error "l0 ERROR: too many arguments in add instruction"))
                                ((number? (second expr)) (bf-number (second expr)))
-                               ((character? (second expr)) (bf-number (char->integer (second expr))))
                                (else (error "l0 ERROR: invalid add instruction argument type"))))
                   ((move) (cond ((nil? (drop expr 1)) (error "l0 ERROR: empty move instruction"))
                                 ((not (nil? (drop expr 2))) (error "l0 ERROR: too many arguments in move instruction"))
