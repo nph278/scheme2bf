@@ -2,11 +2,13 @@
 
 ;; L0: SIMPLE BYTE TAPE
 ;;
-;; move n       -- Move right n cells. If negative, move left.
-;; add n/char   -- Add n to current cell, or char's code.
-;; reset        -- Reset current cell to 0. More performant on lower (<128) cells.
-;; reset-up     -- Reset current cell to 0. More performant on higher (>127) cells.
-;; loop . exprs -- Loop expressions while current cell is not 0.
+;; move n       -- Move right n bytes. If negative, move left.
+;; add n/char   -- Add n to current byte, or char's code.
+;; reset        -- Reset current byte to 0. More performant on lower (<128) bytes.
+;; reset-up     -- Reset current byte to 0. More performant on higher (>127) bytes.
+;; input        -- Input to current byte.
+;; output       -- Output current byte.
+;; loop . exprs -- Loop expressions while current byte is not 0.
 
 (define (make-l0)
   (define (bf-number n)
@@ -37,6 +39,10 @@
                                  (else "[-]")))
                   ((reset-up) (cond ((not (nil? (drop expr 1))) (error "l0 ERROR: too many arguments in reset-up instruction"))
                                     (else "[+]")))
+                  ((input) (cond ((not (nil? (drop expr 1))) (error "l0 ERROR: too many arguments in input instruction"))
+                                 (else ",")))
+                  ((output) (cond ((not (nil? (drop expr 1))) (error "l0 ERROR: too many arguments in output instruction"))
+                                  (else ".")))
                   ((loop) (string-append "[" (compile (drop 1 expr)) "]"))
                   (else (error "l0 ERROR: unknown instruction" (first expr)))))))
 
@@ -54,6 +60,6 @@
 
 ;; CLI
 
-(define example '((add 254) (move 10) (move -10) (reset) (reset-up)))
+(define example '((add 254) (move 10) (move -10) (input) (output) (reset) (reset-up)))
 (display (compile example))
 (newline)
