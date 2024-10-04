@@ -130,7 +130,9 @@
 ;; next-layer           -- Switch to the next layer.
 ;; prev-layer           -- Switch to the previous layer.
 
-(define (make-l1 debug? layers)
+(define (make-l1 debug?)
+  (define layers 2)
+  
   (define (compile-one expr)
     (cond ((not (list? expr)) (error))
           ((nil? expr) (error))
@@ -203,7 +205,6 @@
 ;; Layer 2: [PAD], The heap, including literals, code, list cells, etc.
 
 (define (make-l2 debug?)
-  
   (define type-unspecified 0) ;;
   (define type-procedure   1) ;; address env 
   (define type-number      2) ;; n1 n2
@@ -235,7 +236,7 @@
 ;; COMPILER
 
 (define l0 (make-l0))
-(define l1 (make-l1 #f 2))
+(define l1 (make-l1 #f))
 (define l2 (make-l2 #t))
 (define (compile a)
   (let* ((a ((cdr (assoc 'optimize l2)) a))
