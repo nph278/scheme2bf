@@ -194,12 +194,34 @@
   `((compile . ,compile)
     (optimize . ,optimize)))
 
+;; L2: REGISTER-STACK-HEAP MACHINE
+;; Numbers are twice as wide as addresses.
+
+(define (make-l2 debug? address-width)
+  (define (compile-one expr)
+    (list expr))
+
+  (define (compile exprs)
+    (apply append (map (if debug?
+                           (lambda (expr) `((debug "#2# " ,expr "\n") ,@(compile-one expr) (debug "\n")))
+                           compile-one)
+                       exprs)))
+
+  (define (optimize exprs)
+    exprs)
+
+  `((compile . ,compile)
+    (optimize . ,optimize)))
+
 ;; COMPILER
 
 (define l0 (make-l0))
-(define l1 (make-l1 #t 2))
+(define l1 (make-l1 #f 2))
+(define l2 (make-l2 #t 32))
 (define (compile expr)
-  (let* ((expr ((cdr (assoc 'optimize l1)) expr))
+  (let* ((expr ((cdr (assoc 'optimize l2)) expr))
+         (expr ((cdr (assoc 'compile l2)) expr))
+         (expr ((cdr (assoc 'optimize l1)) expr))
          (expr ((cdr (assoc 'compile l1)) expr))
          (expr ((cdr (assoc 'optimize l0)) expr))
          (expr ((cdr (assoc 'compile l0)) expr)))
