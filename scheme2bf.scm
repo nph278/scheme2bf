@@ -1,5 +1,7 @@
 (use-modules (srfi srfi-1))
 
+(define address-width (/ 16 8))
+
 (define (sanitize expr)
   (cond ((list? expr) (map sanitize expr))
         ((string? expr) (sanitize-string expr))
@@ -196,9 +198,12 @@
 
 ;; L2: REGISTER-STACK-HEAP MACHINE
 ;; Numbers are twice as wide as addresses.
-;; 
+;;
+;; Layer 1: [PAD], Registers, then the stack
+;; Layer 2: [PAD], The heap, including literals, code, list cells, etc.
 
-(define (make-l2 debug? address-width)
+(define (make-l2 debug?)
+  
   (define type-unspecified 0) ;;
   (define type-procedure   1) ;; address env 
   (define type-number      2) ;; n1 n2
@@ -209,20 +214,17 @@
   (define type-character   7) ;; code
   (define type-string      8) ;; start length
   (define type-vector      9) ;; start length
-  
-  (define (compile-one expr)
-    (cond ((not (list? expr)) (error))
-          ((nil? expr) (error))
-          ((breakpoint) (cond ((not (nil? (drop expr 1))) (error))
-                              (else '((breakpoint)))))
-          ((debug) `(,expr))
-          (else (error))))
+
+  (define register-count   0)
+  (define register-ip      1)
+  (define register-results 2)
+  (define register-env     3)
+  (define register-symlist 4)
+  (define registers        5)
 
   (define (compile exprs)
-    (apply append (map (if debug?
-                           (lambda (expr) `((debug "#2# " ,expr "\n") ,@(compile-one expr) (debug "\n")))
-                           compile-one)
-                       exprs)))
+    (append `((move 1) ;; Padding
+              (move ,address-width))))
 
   (define (optimize exprs)
     exprs)
@@ -234,14 +236,14 @@
 
 (define l0 (make-l0))
 (define l1 (make-l1 #f 2))
-(define l2 (make-l2 #t 16))
-(define (compile expr)
-  (let* ((expr ((cdr (assoc 'optimize l2)) expr))
-         (expr ((cdr (assoc 'compile l2)) expr))
-         (expr ((cdr (assoc 'optimize l1)) expr))
-         (expr ((cdr (assoc 'compile l1)) expr))
-         (expr ((cdr (assoc 'optimize l0)) expr))
-         (expr ((cdr (assoc 'compile l0)) expr)))
+(define l2 (make-l2 #t))
+(define (compile a)
+  (let* ((a ((cdr (assoc 'optimize l2)) a))
+         (a ((cdr (assoc 'compile  l2)) a))
+         (a ((cdr (assoc 'optimize l1)) a))
+         (a ((cdr (assoc 'compile  l1)) a))
+         (a ((cdr (assoc 'optimize l0)) a))
+         (a ((cdr (assoc 'compile  l0)) a)))
     #t))
 
 ;; CLI
