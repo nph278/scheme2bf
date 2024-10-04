@@ -9,7 +9,7 @@
 ;; output        -- Output current byte.
 ;; while . exprs -- Loop expressions while current byte is not 0.
 
-(define (make-l0)
+(define (make-l0 port)
   (define (bf-number n)
     (let ((n (modulo n 256)))
       (if (< n 128)
@@ -27,26 +27,26 @@
           (else (case (first expr)
                   ((add) (cond ((nil? (drop expr 1)) (error "l0 ERROR: empty add instruction"))
                                ((not (nil? (drop expr 2))) (error "l0 ERROR: too many arguments in add instruction"))
-                               ((number? (second expr)) (bf-number (second expr)))
+                               ((number? (second expr)) (display (bf-number (second expr)) port))
                                (else (error "l0 ERROR: invalid add instruction argument type"))))
                   ((move) (cond ((nil? (drop expr 1)) (error "l0 ERROR: empty move instruction"))
                                 ((not (nil? (drop expr 2))) (error "l0 ERROR: too many arguments in move instruction"))
-                                ((number? (second expr)) (bf-move (second expr)))
+                                ((number? (second expr)) (display (bf-move (second expr)) port))
                                 (else (error "l0 ERROR: invalid move instruction argument type"))))
                   ((reset) (cond ((not (nil? (drop expr 1)))
                                   (error "l0 ERROR: too many arguments in reset instruction"))
-                                 (else "[-]")))
+                                 (else (display "[-]" port))))
                   ((input) (cond ((not (nil? (drop expr 1)))
                                   (error "l0 ERROR: too many arguments in input instruction"))
-                                 (else ",")))
+                                 (else (display "," port))))
                   ((output) (cond ((not (nil? (drop expr 1)))
                                    (error "l0 ERROR: too many arguments in output instruction"))
-                                  (else ".")))
-                  ((while) (string-append "[" (compile (drop expr 1)) "]"))
+                                  (else (display "." port))))
+                  ((while) (display "[" port) (compile (drop expr 1)) (display "]" port))
                   (else (error "l0 ERROR: unknown instruction" (first expr)))))))
 
   (define (compile exprs)
-    (apply string-append (map compile-one exprs)))
+    (for-each compile-one exprs))
 
   (define (optimize exprs)
     (let loop ((left '((_)))
@@ -152,17 +152,17 @@
 
 ;; COMPILER
 
-(define l0 (make-l0))
+(define l0 (make-l0 (current-output-port)))
 (define l1 (make-l1))
 (define (compile expr)
-  (let* ((expr ((cdr (assoc 'optimize l1)) expr))
-         (expr ((cdr (assoc 'compile l1)) expr))
+  (let* (#;(expr ((cdr (assoc 'optimize l1)) expr))
+         #;(expr ((cdr (assoc 'compile l1)) expr))
          (expr ((cdr (assoc 'optimize l0)) expr))
          (expr ((cdr (assoc 'compile l0)) expr)))
-    expr))
+    #t))
 
 ;; CLI
 
 (define example '((add 1) (move 10) (move -10) (add -2) (while (input) (add 10) (reset) (input) (add -5) (output)) (input) (output) (reset) (reset)))
-(display (compile example))
+(compile example)
 (newline)
