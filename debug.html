@@ -192,6 +192,7 @@
           document.getElementById("step").onclick = step;
           document.getElementById("run").onclick = () => {running = true};
           document.getElementById("stop").onclick = () => {running = false};
+          document.getElementById("back").onclick = () => {state = history.pop(); update()};
 
           setInterval(() => {
               if (running) {

@@ -97,8 +97,7 @@
 ;; find-untagged-right  -- Find nearest untagged cell on right.
 ;; while-value . exprs  -- Loop expressions while current cell is not 0.
 ;; while-tagged . exprs -- Loop expressions while current cell is tagged.
-;; COPYING - Assumes untagged
-;; copy-take            -- Take one from cell for copying.
+;; copy-take            -- Take one from cell for copying. Assumes untagged.
 ;; copy-put             -- Put one at cell for copying.
 ;; copy-reset           -- Fix cell after copying.
 
@@ -130,9 +129,9 @@
                   ((untag) (cond ((not (nil? (drop expr 1))) (error))
                                  (else '((move 1) (reset) (move -1)))))
                   ((find-tagged-left) (cond ((not (nil? (drop expr 1))) (error))
-                                            (else '((move -1) (add -1) (while (add 1) (move -2)) (add 1) (move -1)))))
+                                            (else '((move -1) (add -1) (while (add 1) (move -2) (add -1)) (add 1) (move -1)))))
                   ((find-tagged-right) (cond ((not (nil? (drop expr 1))) (error))
-                                             (else '((move 3) (add -1) (while (add 1) (move 2)) (add 1) (move -1)))))
+                                             (else '((move 3) (add -1) (while (add 1) (move 2) (add -1)) (add 1) (move -1)))))
                   ((find-untagged-left) (cond ((not (nil? (drop expr 1))) (error))
                                               (else '((move -1) (while (move -2)) (move -1)))))
                   ((find-untagged-right) (cond ((not (nil? (drop expr 1))) (error))
@@ -169,6 +168,8 @@
 
 ;; CLI
 
-(define example '())
+(define example '((add 10)
+                  (while-value (copy-take) (move 1) (copy-put) (move -1))
+                  (copy-reset)))
 (compile example)
 (newline)
