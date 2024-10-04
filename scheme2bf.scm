@@ -196,8 +196,20 @@
 
 ;; L2: REGISTER-STACK-HEAP MACHINE
 ;; Numbers are twice as wide as addresses.
+;; 
 
 (define (make-l2 debug? address-width)
+  (define type-unspecified 0) ;;
+  (define type-procedure   1) ;; address env 
+  (define type-number      2) ;; n1 n2
+  (define type-boolean     3) ;; b
+  (define type-pair        4) ;; car cdr
+  (define type-nil         5) ;;
+  (define type-symbol      6) ;; id
+  (define type-character   7) ;; code
+  (define type-string      8) ;; start length
+  (define type-vector      9) ;; start length
+  
   (define (compile-one expr)
     (cond ((not (list? expr)) (error))
           ((nil? expr) (error))
@@ -222,7 +234,7 @@
 
 (define l0 (make-l0))
 (define l1 (make-l1 #f 2))
-(define l2 (make-l2 #t 32))
+(define l2 (make-l2 #t 16))
 (define (compile expr)
   (let* ((expr ((cdr (assoc 'optimize l2)) expr))
          (expr ((cdr (assoc 'compile l2)) expr))
