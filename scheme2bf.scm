@@ -79,12 +79,34 @@
   `((compile . ,compile)
     (optimize . ,optimize)))
 
+;; L1: TAGGED BYTE TAPE
+;;
+;; move n        -- Move right n cellws. If negative, move left.
+;; add n         -- Add n to current cell.
+;; reset         -- Reset current byte to 0. More performant on lower (<128) bytes.
+;; input         -- Input to current byte.
+;; output        -- Output current byte.
+;; while . exprs -- Loop expressions while current byte is not 0.
+
+(define (make-l1)
+  (define (compile exprs)
+    exprs)
+
+  (define (optimize exprs)
+    exprs)
+
+  `((compile . ,compile)
+    (optimize . ,optimize)))
+
 ;; COMPILER
 
 (define l0 (make-l0))
+(define l1 (make-l1))
 (define (compile expr)
   (let* ((expr ((cdr (assoc 'optimize l0)) expr))
-         (expr ((cdr (assoc 'compile l0)) expr)))
+         (expr ((cdr (assoc 'compile l0)) expr))
+         (expr ((cdr (assoc 'optimize l1)) expr))
+         (expr ((cdr (assoc 'compile l1)) expr)))
     expr))
 
 ;; CLI
