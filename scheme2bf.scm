@@ -4,7 +4,7 @@
 ;;
 ;; move n        -- Move right n bytes. If negative, move left.
 ;; add n         -- Add n to current byte.
-;; reset         -- Reset current byte to 0. More performant on lower (<128) bytes.
+;; reset         -- Reset current byte to 0.
 ;; input         -- Input to current byte.
 ;; output        -- Output current byte.
 ;; while . exprs -- Loop expressions while current byte is not 0.
@@ -81,12 +81,25 @@
 
 ;; L1: TAGGED BYTE TAPE
 ;;
-;; move n        -- Move right n cellws. If negative, move left.
-;; add n         -- Add n to current cell.
-;; reset         -- Reset current byte to 0. More performant on lower (<128) bytes.
-;; input         -- Input to current byte.
-;; output        -- Output current byte.
-;; while . exprs -- Loop expressions while current byte is not 0.
+;; move n               -- Move right n cellws. If negative, move left.
+;; add n                -- Add n to current cell.
+;; reset                -- Reset current cell to 0.
+;; input                -- Input to current cell.
+;; output               -- Output current cell.
+;; tag-from-untagged    -- Make current untagged cell tagged.
+;; untag-from-tagged    -- Make current tagged cell untagged.
+;; tag                  -- Make current cell tagged.
+;; untag                -- Make current cell untagged.
+;; find-tagged-left     -- Find nearest tagged cell on left.
+;; find-tagged-right    -- Find nearest tagged cell on right.
+;; find-untagged-left   -- Find nearest untagged cell on left.
+;; find-untagged-right  -- Find nearest untagged cell on right.
+;; while-value . exprs  -- Loop expressions while current cell is not 0.
+;; while-tagged . exprs -- Loop expressions while current cell is tagged.
+;; COPYING - Assumes untagged
+;; copy-take            -- Take one from cell for copying.
+;; copy-put             -- Put one at cell for copying.
+;; copy-reset           -- Fix cell after copying.
 
 (define (make-l1)
   (define (compile exprs)
