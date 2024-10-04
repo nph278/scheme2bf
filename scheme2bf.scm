@@ -30,7 +30,7 @@
 ;; output        -- Output current byte.
 ;; while . exprs -- Loop expressions while current byte is not 0.
 
-(define (make-l0 port)
+(define (make-l0)
   (define (bf-number n)
     (let ((n (modulo n 256)))
       (if (< n 128)
@@ -48,22 +48,22 @@
           (else (case (first expr)
                   ((add) (cond ((nil? (drop expr 1)) (error))
                                ((not (nil? (drop expr 2))) (error))
-                               ((number? (second expr)) (display (bf-number (second expr)) port))
+                               ((number? (second expr)) (display (bf-number (second expr))))
                                (else (error))))
                   ((move) (cond ((nil? (drop expr 1)) (error))
                                 ((not (nil? (drop expr 2))) (error))
-                                ((number? (second expr)) (display (bf-move (second expr)) port))
+                                ((number? (second expr)) (display (bf-move (second expr))))
                                 (else (error))))
                   ((reset) (cond ((not (nil? (drop expr 1))) (error))
-                                 (else (display "[-]" port))))
+                                 (else (display "[-]"))))
                   ((input) (cond ((not (nil? (drop expr 1))) (error))
-                                 (else (display "," port))))
+                                 (else (display ","))))
                   ((output) (cond ((not (nil? (drop expr 1))) (error))
-                                  (else (display "." port))))
+                                  (else (display "."))))
                   ((breakpoint) (cond ((not (nil? (drop expr 1))) (error))
-                                      (else (display "!" port))))
-                  ((while) (display "[" port) (compile (drop expr 1)) (display "]" port))
-                  ((debug) (for-each (lambda (a) (display (sanitize a) port)) (drop expr 1)))
+                                      (else (display "!"))))
+                  ((while) (display "[") (compile (drop expr 1)) (display "]"))
+                  ((debug) (for-each (lambda (a) (display (sanitize a))) (drop expr 1)))
                   (else (error))))))
 
   (define (compile exprs)
@@ -195,7 +195,7 @@
 
 ;; COMPILER
 
-(define l0 (make-l0 (current-output-port)))
+(define l0 (make-l0))
 (define l1 (make-l1 #t 2))
 (define (compile expr)
   (let* ((expr ((cdr (assoc 'optimize l1)) expr))
