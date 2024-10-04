@@ -199,7 +199,12 @@
 
 (define (make-l2 debug? address-width)
   (define (compile-one expr)
-    (list expr))
+    (cond ((not (list? expr)) (error))
+          ((nil? expr) (error))
+          ((breakpoint) (cond ((not (nil? (drop expr 1))) (error))
+                              (else '((breakpoint)))))
+          ((debug) `(,expr))
+          (else (error))))
 
   (define (compile exprs)
     (apply append (map (if debug?
@@ -229,14 +234,6 @@
 
 ;; CLI
 
-(define example '((add 10)
-                  (while-value (copy-take) (move 1) (copy-put) (move -1))
-                  (copy-reset)
-                  (next-layer)
-                  (breakpoint)
-                  (add 10)
-                  (while-value (copy-take) (move 1) (copy-put) (move -1))
-                  (copy-reset)
-                  (prev-layer)))
+(define example '())
 (compile example)
 (newline)
