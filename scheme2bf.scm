@@ -1,5 +1,26 @@
 (use-modules (srfi srfi-1))
 
+(define (sanitize expr)
+  (cond ((list? expr) (map sanitize expr))
+        ((string? expr) (sanitize-string expr))
+        ((symbol? expr) (string->symbol (sanitize-string (symbol->string expr))))
+        ((number? expr) (if (< expr 0) `(_ ,(- expr)) expr))
+        (else expr)))
+
+(define (sanitize-string s)
+  (list->string (map (lambda (c)
+                       (case c
+                         ((#\+) #\*)
+                         ((#\-) #\_)
+                         ((#\<) #\()
+                         ((#\>) #\))
+                         ((#\[) #\{)
+                         ((#\]) #\})
+                         ((#\.) #\:)
+                         ((#\,) #\;)
+                         (else c)))
+                     (string->list s))))
+
 ;; L0: SIMPLE BYTE TAPE
 ;;
 ;; move n        -- Move right n bytes. If negative, move left.
@@ -42,6 +63,7 @@
                   ((breakpoint) (cond ((not (nil? (drop expr 1))) (error))
                                       (else (display "!" port))))
                   ((while) (display "[" port) (compile (drop expr 1)) (display "]" port))
+                  ((debug) (for-each (lambda (a) (display (sanitize a) port)) (drop expr 1)))
                   (else (error))))))
 
   (define (compile exprs)
@@ -106,7 +128,7 @@
 ;; next-layer           -- Switch to the next layer.
 ;; prev-layer           -- Switch to the previous layer.
 
-(define (make-l1 layers)
+(define (make-l1 debug? layers)
   (define (compile-one expr)
     (cond ((not (list? expr)) (error))
           ((nil? expr) (error))
@@ -157,10 +179,13 @@
                                       (else '((move -2)))))
                   ((breakpoint) (cond ((not (nil? (drop expr 1))) (error))
                                       (else '((breakpoint)))))
+                  ((debug) `(,expr))
                   (else (error))))))
-
   (define (compile exprs)
-    (apply append (map compile-one exprs)))
+    (apply append (map (if debug?
+                           (lambda (expr) `((debug "#1# " ,expr "\n") ,@(compile-one expr) (debug "\n")))
+                           compile-one)
+                       exprs)))
 
   (define (optimize exprs)
     exprs)
@@ -171,7 +196,7 @@
 ;; COMPILER
 
 (define l0 (make-l0 (current-output-port)))
-(define l1 (make-l1 2))
+(define l1 (make-l1 #t 2))
 (define (compile expr)
   (let* ((expr ((cdr (assoc 'optimize l1)) expr))
          (expr ((cdr (assoc 'compile l1)) expr))
