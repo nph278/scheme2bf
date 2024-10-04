@@ -39,6 +39,8 @@
                                  (else (display "," port))))
                   ((output) (cond ((not (nil? (drop expr 1))) (error))
                                   (else (display "." port))))
+                  ((breakpoint) (cond ((not (nil? (drop expr 1))) (error))
+                                      (else (display "!" port))))
                   ((while) (display "[" port) (compile (drop expr 1)) (display "]" port))
                   (else (error))))))
 
@@ -153,6 +155,8 @@
                                       (else '((move 2)))))
                   ((prev-layer) (cond ((not (nil? (drop expr 1))) (error))
                                       (else '((move -2)))))
+                  ((breakpoint) (cond ((not (nil? (drop expr 1))) (error))
+                                      (else '((breakpoint)))))
                   (else (error))))))
 
   (define (compile exprs)
@@ -181,6 +185,7 @@
                   (while-value (copy-take) (move 1) (copy-put) (move -1))
                   (copy-reset)
                   (next-layer)
+                  (breakpoint)
                   (add 10)
                   (while-value (copy-take) (move 1) (copy-put) (move -1))
                   (copy-reset)
