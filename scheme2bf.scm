@@ -181,6 +181,7 @@
                                       (else '((breakpoint)))))
                   ((debug) `(,expr))
                   (else (error))))))
+
   (define (compile exprs)
     (apply append (map (if debug?
                            (lambda (expr) `((debug "#1# " ,expr "\n") ,@(compile-one expr) (debug "\n")))
