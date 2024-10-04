@@ -69,9 +69,10 @@
              (loop-stay `((add ,(+ (part 0 1) (part 1 1)))) 2))
             ((and (eq? (part 0 0) 'move) (eq? (part 1 0) 'move))
              (loop-stay `((move ,(+ (part 0 1) (part 1 1)))) 2))
-            ((and (or (eq? (part 0 0) 'add)
-                      (eq? (part 0 0) 'reset))
-                  (eq? (part 1 0) 'reset))
+            ((and (or (eq? (part 0 0) 'reset)
+                      (eq? (part 0 0) 'add))
+                  (or (eq? (part 1 0) 'reset)
+                      (eq? (part 1 0) 'input)))
              (loop-back '() 1))
             (else
              (loop `(,(first right) . ,left) (drop right 1))))))
@@ -89,6 +90,6 @@
 
 ;; CLI
 
-(define example '((add 1) (move 10) (move -10) (add -2) (while (input) (add 10) (reset) (add -5) (output)) (input) (output) (reset) (reset)))
+(define example '((add 1) (move 10) (move -10) (add -2) (while (input) (add 10) (reset) (input) (add -5) (output)) (input) (output) (reset) (reset)))
 (display (compile example))
 (newline)
