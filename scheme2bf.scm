@@ -232,7 +232,8 @@
       (move ,datum-width)))
 
   (define (compile exprs)
-    `((move ,datum-width)
+    `(,@(debug "padding")
+      (move ,datum-width)
       (next-layer)
 
       ,@(debug "load code")
