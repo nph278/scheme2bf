@@ -1,6 +1,7 @@
 (use-modules (srfi srfi-1))
 
 (define address-width (/ 16 8))
+(define datum-width (+ address-width 1))
 
 (define (sanitize expr)
   (cond ((list? expr) (map sanitize expr))
@@ -188,7 +189,7 @@
 
   (define (compile exprs)
     (apply append (map (if debug?
-                           (lambda (expr) `((debug "#1# " ,expr "\n") ,@(compile-one expr) (debug "\n")))
+                           (lambda (expr) `((debug "\n#1# " ,expr "\n") . ,(compile-one expr)))
                            compile-one)
                        exprs)))
 
@@ -224,18 +225,38 @@
   (define register-symlist 4)
   (define registers        5)
 
+  (define (debug a)
+    (if debug?
+        `((debug "\n#2# " ,a "\n"))
+        '()))
+
   (define (compile exprs)
-    (append `((move 1)                    ;; Padding
+    (append `(,@(debug "padding")
+              (move 1))
+            `(;; counter: 0
+              ,@(debug "init register-counter")
               (add ,type-pointer)
-              (move ,address-width)       ;; Counter empty
+              (tag-from-untagged)
+              (move ,datum-width)
+              ;; ip: 0x0
+              ,@(debug "init register-ip")
               (add ,type-pointer)
-              (move ,address-width)       ;; ip: 0x0
-              (move ,address-width)       ;; results: unspecified
+              (tag-from-untagged)
+              (move ,datum-width)
+              ;; results: unspecified
+              ,@(debug "init register-results")
+              (tag-from-untagged)
+              (move ,datum-width)
+              ;; env: nil
+              ,@(debug "init register-env")
               (add ,type-nil)
-              (move ,address-width)       ;; env: nil
+              (tag-from-untagged)
+              (move ,datum-width)
+              ;; symlist: nil
+              ,@(debug "init register-symlist")
               (add ,type-nil)
-              (move ,address-width)       ;; symlist: nil
-              )))
+              (tag-from-untagged)
+              (move ,datum-width))))
 
   (define (optimize exprs)
     exprs)
