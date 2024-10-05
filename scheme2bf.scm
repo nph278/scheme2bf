@@ -202,21 +202,22 @@
 ;; Numbers are twice as wide as addresses.
 ;;
 ;; Layer 1: [PAD], Registers, then the stack
-;; Layer 2: [PAD], The heap, including literals, code, list cells, etc.
+;; Layer 2: [PAD], The heap: [global_env] [global_symlist] [[code]] [[literals]] [[rest]]
 
 (define (make-l2 debug?)
   (define type-unspecified 0) ;;
   (define type-procedure   1) ;; address env 
   (define type-number      2) ;; n1 n2
-  (define type-boolean     3) ;; b
+  (define type-boolean     3) ;; 0 b
   (define type-pair        4) ;; car cdr
-  (define type-nil         5) ;;
-  (define type-symbol      6) ;; id
-  (define type-character   7) ;; code
+  (define type-nil         5) ;; 0 0
+  (define type-symbol      6) ;; 0 id
+  (define type-character   7) ;; 0 code
   (define type-string      8) ;; start length
   (define type-vector      9) ;; start length
+  (define type-pointer    10) ;; 0 adr (fake type)
 
-  (define register-count   0)
+  (define register-counter 0)
   (define register-ip      1)
   (define register-results 2)
   (define register-env     3)
@@ -224,8 +225,17 @@
   (define registers        5)
 
   (define (compile exprs)
-    (append `((move 1) ;; Padding
-              (move ,address-width))))
+    (append `((move 1)                    ;; Padding
+              (add ,type-pointer)
+              (move ,address-width)       ;; Counter empty
+              (add ,type-pointer)
+              (move ,address-width)       ;; ip: 0x0
+              (move ,address-width)       ;; results: unspecified
+              (add ,type-nil)
+              (move ,address-width)       ;; env: nil
+              (add ,type-nil)
+              (move ,address-width)       ;; symlist: nil
+              )))
 
   (define (optimize exprs)
     exprs)
