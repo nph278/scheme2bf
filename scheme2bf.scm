@@ -1,8 +1,5 @@
 (use-modules (srfi srfi-1))
 
-(define address-width (/ 16 8))
-(define datum-width (+ address-width 1))
-
 (define (sanitize expr)
   (cond ((list? expr) (map sanitize expr))
         ((string? expr) (sanitize-string expr))
@@ -196,6 +193,9 @@
 ;; Layer 2: [PAD], The heap: [global_env] [global_symlist] [[code]] [[literals]] [[rest]]
 
 (define (make-l2 debug?)
+  (define address-width (/ 16 8))
+  (define datum-width (+ address-width 1))
+
   (define type-unspecified 0) ;;
   (define type-procedure   1) ;; address env 
   (define type-number      2) ;; n1 n2
@@ -215,38 +215,60 @@
   (define register-symlist 4)
   (define registers        5)
 
+  (define ins-halt         0)
+
   (define (debug a)
     (if debug?
         `((debug "\n#2# " ,a "\n"))
         '()))
 
+  (define (compile-instruction expr)
+    `((tag-from-untagged)
+      ,@(cond ((not (list? expr)) (error))
+              ((nil? expr) (error))
+              ((case (first expr)
+                 ((halt) `((add ,ins-halt)))
+                 (else (error)))))
+      (move ,datum-width)))
+
   (define (compile exprs)
-    (append `(,@(debug "padding")
-              (move ,datum-width))
-            `(;; counter: 0
-              ,@(debug "init register-counter")
-              (add ,type-pointer)
-              (tag-from-untagged)
-              (move ,datum-width)
-              ;; ip: 0x0
-              ,@(debug "init register-ip")
-              (add ,type-pointer)
-              (tag-from-untagged)
-              (move ,datum-width)
-              ;; results: unspecified
-              ,@(debug "init register-results")
-              (tag-from-untagged)
-              (move ,datum-width)
-              ;; env: nil
-              ,@(debug "init register-env")
-              (add ,type-nil)
-              (tag-from-untagged)
-              (move ,datum-width)
-              ;; symlist: nil
-              ,@(debug "init register-symlist")
-              (add ,type-nil)
-              (tag-from-untagged)
-              (move ,datum-width))))
+    `((move ,datum-width)
+      (next-layer)
+
+      ,@(debug "load code")
+      ,@(apply append (map compile-instruction exprs))
+
+      ,@(debug "return to stack")
+      (move ,(- datum-width))
+      (while-tagged (move ,(- datum-width)))
+
+      (move ,datum-width)
+      (prev-layer)
+      
+      ;; counter: 0
+      ,@(debug "init register-counter")
+      (add ,type-pointer)
+      (tag-from-untagged)
+      (move ,datum-width)
+      ;; ip: 0x0
+      ,@(debug "init register-ip")
+      (add ,type-pointer)
+      (tag-from-untagged)
+      (move ,datum-width)
+      ;; results: unspecified
+      ,@(debug "init register-results")
+      (tag-from-untagged)
+      (move ,datum-width)
+      ;; env: nil
+      ,@(debug "init register-env")
+      (add ,type-nil)
+      (tag-from-untagged)
+      (move ,datum-width)
+      ;; symlist: nil
+      ,@(debug "init register-symlist")
+      (add ,type-nil)
+      (tag-from-untagged)
+      (move ,datum-width)))
 
   (define (optimize exprs)
     exprs)
@@ -270,6 +292,6 @@
 
 ;; CLI
 
-(define example '())
+(define example '((halt)))
 (compile example)
 (newline)
