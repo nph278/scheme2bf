@@ -210,10 +210,9 @@
 
   (define register-counter 0)
   (define register-ip      1)
-  (define register-results 2)
-  (define register-env     3)
-  (define register-symlist 4)
-  (define registers        5)
+  (define register-env     2)
+  (define register-symlist 3)
+  (define registers        4)
 
   (define ins-halt         0)
 
@@ -254,10 +253,6 @@
       ;; ip: 0x0
       ,@(debug "init register-ip")
       (add ,type-pointer)
-      (tag-from-untagged)
-      (move ,datum-width)
-      ;; results: unspecified
-      ,@(debug "init register-results")
       (tag-from-untagged)
       (move ,datum-width)
       ;; env: nil
