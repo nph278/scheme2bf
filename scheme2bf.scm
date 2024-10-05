@@ -232,7 +232,7 @@
 
   (define (compile exprs)
     (append `(,@(debug "padding")
-              (move 1))
+              (move ,datum-width))
             `(;; counter: 0
               ,@(debug "init register-counter")
               (add ,type-pointer)
