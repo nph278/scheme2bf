@@ -207,7 +207,7 @@
   (define type-pair                    4) ;; car cdr
   (define type-nil                     5) ;; 0 0
   (define type-symbol                  6) ;; 0 id
-  (define type-character               7) ;; 0 code
+  (define type-char                    7) ;; 0 code
   (define type-string                  8) ;; start length
   (define type-vector                  9) ;; start length
   (define type-pointer                10) ;; 0 adr (only for registers)
@@ -248,14 +248,22 @@
                         ((halt) `((move ,(* 2 address-width))))
                         ((push) `((move ,(* 2 address-width))
                                   (tag-from-untagged)
-                                  (add ,type-boolean)
                                   ,@(cond ((nil? (drop expr 1))
                                            (error))
                                           ((not (nil? (drop expr 2)))
                                            (error))
+                                          ((nil? (second expr))
+                                           `((add ,type-nil)
+                                             (move ,datum-width)))
                                           ((boolean? (second expr))
-                                           `((move ,(* 2 address-width))
+                                           `((add ,type-boolean)
+                                             (move ,(* 2 address-width))
                                              (add ,(if (second expr) 1 0))
+                                             (move 1)))
+                                          ((char? (second expr))
+                                           `((add ,type-char)
+                                             (move ,(* 2 address-width))
+                                             (add ,(char->integer (second expr)))
                                              (move 1)))
                                           (else (error)))))
                         (else (error)))))))))
@@ -318,6 +326,6 @@
 
 ;; CLI
 
-(define example '((push #t) (push #f) (halt)))
+(define example '((push #t) (push ()) (push #\a) (halt)))
 (compile example)
 (newline)
