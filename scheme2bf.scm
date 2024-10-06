@@ -1,25 +1,27 @@
 (use-modules (srfi srfi-1))
 
 (define (sanitize expr)
+  (define (sanitize-char c)
+    (case c
+      ((#\+) #\*)
+      ((#\-) #\_)
+      ((#\<) #\()
+      ((#\>) #\))
+      ((#\[) #\{)
+      ((#\]) #\})
+      ((#\.) #\:)
+      ((#\,) #\;)
+      (else c)))
+
+  (define (sanitize-string s)
+    (list->string (map sanitize-char (string->list s))))
+
   (cond ((list? expr) (map sanitize expr))
         ((string? expr) (sanitize-string expr))
+        ((char? expr) (sanitize-char expr))
         ((symbol? expr) (string->symbol (sanitize-string (symbol->string expr))))
         ((number? expr) (if (< expr 0) `(_ ,(- expr)) expr))
         (else expr)))
-
-(define (sanitize-string s)
-  (list->string (map (lambda (c)
-                       (case c
-                         ((#\+) #\*)
-                         ((#\-) #\_)
-                         ((#\<) #\()
-                         ((#\>) #\))
-                         ((#\[) #\{)
-                         ((#\]) #\})
-                         ((#\.) #\:)
-                         ((#\,) #\;)
-                         (else c)))
-                     (string->list s))))
 
 ;; L0: SIMPLE BYTE TAPE
 ;;
