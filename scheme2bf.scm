@@ -241,8 +241,9 @@
           ((nil? expr)
            (error))
           (else 
-           `((tag-from-untagged)
+           `(,@(debug expr)
              (add ,(instruction->code (first expr)))
+             (tag-from-untagged)
              (move 1)
              ,@(cond ((case (first expr)
                         ((halt) `((move ,(* 2 address-width))))
