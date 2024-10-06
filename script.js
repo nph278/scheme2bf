@@ -33,10 +33,10 @@ window.onload = () => {
         let d = state.data.map(n => {
             let a = n.toString();
             if (a.length < 3) {
-                a = "0" + a;
+                a = " " + a;
             }
             if (a.length < 3) {
-                a = "0" + a;
+                a = " " + a;
             }
             if (counter === state.data_pos) {
                 a = "<strong>" + a + "</strong>";
