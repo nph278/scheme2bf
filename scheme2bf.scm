@@ -191,10 +191,14 @@
 ;;
 ;; Layer 1: [PAD], Registers, then the stack
 ;; Layer 2: [PAD], The heap: [global_env] [global_symlist] [[code]] [[literals]] [[rest]]
+;;
+;; BYTES:            1 adrwidth adrwidth
+;; Datum:       [type] [[arg1]] [[arg2]]
+;; Instruction: [code] [[arg1]] [[arg2]]
 
 (define (make-l2 debug?)
   (define address-width (/ 16 8))
-  (define datum-width (+ address-width 1))
+  (define datum-width (+ 1 (* 2 address-width)))
 
   (define type-unspecified             0) ;;
   (define type-procedure               1) ;; address env 
@@ -214,7 +218,16 @@
   (define register-symbol-table        3)
   (define registers                    4)
 
-  (define ins-halt                     0)
+  (define instructions
+    '((halt . 0)))
+
+  (define (instruction->code instruction)
+    (cdr (find (lambda (p) (eq? (car p) instruction))
+               instructions)))
+
+  (define (code->instruction code)
+    (car (find (lambda (p) (eq? (cdr p) code))
+               instructions)))
 
   (define (debug a)
     (if debug?
@@ -222,13 +235,16 @@
         '()))
 
   (define (compile-instruction expr)
-    `((tag-from-untagged)
-      ,@(cond ((not (list? expr)) (error))
-              ((nil? expr) (error))
-              ((case (first expr)
-                 ((halt) `((add ,ins-halt)))
-                 (else (error)))))
-      (move ,datum-width)))
+    (cond ((not (list expr))
+           (error))
+          ((nil? expr)
+           (error))
+          (else 
+           `((tag-from-untagged)
+             (add ,(instruction->code (first expr)))
+             ,@(cond ((case (first expr)
+                        ((halt) `((move ,datum-width)))
+                        (else (error)))))))))
 
   (define (compile exprs)
     `(,@(debug "padding")
