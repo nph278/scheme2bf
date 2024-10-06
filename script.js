@@ -44,6 +44,9 @@ window.onload = () => {
             if (counter % 4 === 0) {
                 a = "<br/>" + a;
             }
+            if (counter % 20 === 0) {
+                a = "<br/>" + a;
+            }
             counter++;
             return a;
         });
