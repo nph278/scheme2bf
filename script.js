@@ -41,6 +41,9 @@ window.onload = () => {
             if (counter === state.data_pos) {
                 a = "<strong>" + a + "</strong>";
             }
+            if (counter % 2 === 0) {
+                a = "&nbsp;&nbsp;&nbsp;&nbsp;" + a;
+            }
             if (counter % 4 === 0) {
                 a = "<br/>" + a;
             }
