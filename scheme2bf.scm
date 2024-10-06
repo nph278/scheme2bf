@@ -219,7 +219,8 @@
   (define registers                    4)
 
   (define instructions
-    '((halt . 0)))
+    '((halt . 0)
+      (push . 1)))
 
   (define (instruction->code instruction)
     (cdr (find (lambda (p) (eq? (car p) instruction))
@@ -235,17 +236,28 @@
         '()))
 
   (define (compile-instruction expr)
-    (define next-arg `(move ,address-width))
     (cond ((not (list expr))
            (error))
           ((nil? expr)
            (error))
           (else 
            `((tag-from-untagged)
-             (move 1)
              (add ,(instruction->code (first expr)))
+             (move 1)
              ,@(cond ((case (first expr)
-                        ((halt) `(,next-arg ,next-arg))
+                        ((halt) `((move ,(* 2 address-width))))
+                        ((push) `((move ,(* 2 address-width))
+                                  (tag-from-untagged)
+                                  (add ,type-boolean)
+                                  ,@(cond ((nil? (drop expr 1))
+                                           (error))
+                                          ((not (nil? (drop expr 2)))
+                                           (error))
+                                          ((boolean? (second expr))
+                                           `((move ,(* 2 address-width))
+                                             (add ,(if (second expr) 1 0))
+                                             (move 1)))
+                                          (else (error)))))
                         (else (error)))))))))
 
   (define (compile exprs)
@@ -306,6 +318,6 @@
 
 ;; CLI
 
-(define example '((halt) (halt)))
+(define example '((push #t) (push #f) (halt)))
 (compile example)
 (newline)

@@ -50,6 +50,21 @@ window.onload = () => {
             if (counter % 20 === 0) {
                 a = "<br/>" + a;
             }
+            if (counter % 20 === 3) {
+                a = a + " ~";
+            }
+            if (counter % 20 === 7) {
+                a = a + " \\";
+            }
+            if (counter % 20 === 11) {
+                a = a + " /";
+            }
+            if (counter % 20 === 15) {
+                a = a + " \\";
+            }
+            if (counter % 20 === 19) {
+                a = a + " /";
+            }
             counter++;
             return a;
         });
