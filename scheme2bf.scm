@@ -235,15 +235,17 @@
         '()))
 
   (define (compile-instruction expr)
+    (define next-arg `(move ,address-width))
     (cond ((not (list expr))
            (error))
           ((nil? expr)
            (error))
           (else 
            `((tag-from-untagged)
+             (move 1)
              (add ,(instruction->code (first expr)))
              ,@(cond ((case (first expr)
-                        ((halt) `((move ,datum-width)))
+                        ((halt) `(,next-arg ,next-arg))
                         (else (error)))))))))
 
   (define (compile exprs)
@@ -304,6 +306,6 @@
 
 ;; CLI
 
-(define example '((halt)))
+(define example '((halt) (halt)))
 (compile example)
 (newline)
