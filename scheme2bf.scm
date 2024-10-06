@@ -196,25 +196,25 @@
   (define address-width (/ 16 8))
   (define datum-width (+ address-width 1))
 
-  (define type-unspecified 0) ;;
-  (define type-procedure   1) ;; address env 
-  (define type-number      2) ;; n1 n2
-  (define type-boolean     3) ;; 0 b
-  (define type-pair        4) ;; car cdr
-  (define type-nil         5) ;; 0 0
-  (define type-symbol      6) ;; 0 id
-  (define type-character   7) ;; 0 code
-  (define type-string      8) ;; start length
-  (define type-vector      9) ;; start length
-  (define type-pointer    10) ;; 0 adr (fake type)
+  (define type-unspecified             0) ;;
+  (define type-procedure               1) ;; address env 
+  (define type-number                  2) ;; n1 n2
+  (define type-boolean                 3) ;; 0 b
+  (define type-pair                    4) ;; car cdr
+  (define type-nil                     5) ;; 0 0
+  (define type-symbol                  6) ;; 0 id
+  (define type-character               7) ;; 0 code
+  (define type-string                  8) ;; start length
+  (define type-vector                  9) ;; start length
+  (define type-pointer                10) ;; 0 adr (only for registers)
 
-  (define register-counter 0)
-  (define register-ip      1)
-  (define register-env     2)
-  (define register-symlist 3)
-  (define registers        4)
+  (define register-heap-pointer        0)
+  (define register-instruction-pointer 1)
+  (define register-environment         2)
+  (define register-symbol-table        3)
+  (define registers                    4)
 
-  (define ins-halt         0)
+  (define ins-halt                     0)
 
   (define (debug a)
     (if debug?
@@ -245,23 +245,23 @@
       (move ,datum-width)
       (prev-layer)
       
-      ;; counter: 0
-      ,@(debug "init register-counter")
+      ;; 0
+      ,@(debug "init register-heap-pointer")
       (add ,type-pointer)
       (tag-from-untagged)
       (move ,datum-width)
-      ;; ip: 0x0
-      ,@(debug "init register-ip")
+      ;; 0x0
+      ,@(debug "init register-instruction-pointer")
       (add ,type-pointer)
       (tag-from-untagged)
       (move ,datum-width)
-      ;; env: nil
-      ,@(debug "init register-env")
+      ;; nil
+      ,@(debug "init register-environment")
       (add ,type-nil)
       (tag-from-untagged)
       (move ,datum-width)
-      ;; symlist: nil
-      ,@(debug "init register-symlist")
+      ;; nil
+      ,@(debug "init register-symbol-table")
       (add ,type-nil)
       (tag-from-untagged)
       (move ,datum-width)))
