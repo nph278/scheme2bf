@@ -199,12 +199,17 @@
 ;; Instruction: [code] [[arg1]] [[arg2]]
 
 (define (make-l2 debug?)
-  (define address-width (/ 16 8))
+  (define address-width (quotient 16 8))
   (define datum-width (+ 1 (* 2 address-width)))
+
+  (define (integer->bytes n)
+    (reverse (map (lambda (pos)
+                    (modulo (quotient n (expt 256 pos)) 256))
+                  (iota (* 2 address-width)))))
 
   (define type-unspecified             0) ;;
   (define type-procedure               1) ;; address env 
-  (define type-number                  2) ;; n1 n2
+  (define type-number                  2) ;; n ...
   (define type-boolean                 3) ;; 0 b
   (define type-pair                    4) ;; car cdr
   (define type-nil                     5) ;; 0 0
@@ -268,6 +273,14 @@
                                              (move ,(* 2 address-width))
                                              (add ,(char->integer (second expr)))
                                              (move 1)))
+                                          ((number? (second expr))
+                                           `((add ,type-number)
+                                             (move 1)
+                                             ,@(apply append
+                                                      (map (lambda (n)
+                                                             `((add ,n)
+                                                               (move 1)))
+                                                           (integer->bytes (second expr))))))
                                           (else (error)))))
                         (else (error)))))))))
 
@@ -329,6 +342,6 @@
 
 ;; CLI
 
-(define example '((push #t) (push ()) (push #\a) (halt)))
+(define example '((push #t) (push ()) (push #\a) (push 515) (halt)))
 (compile example)
 (newline)
