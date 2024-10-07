@@ -259,11 +259,11 @@
           ((nil? expr)
            (error))
           (else 
-           `(,@(debug expr)
-             (add ,(instruction->code (first expr)))
+           `((add ,(instruction->code (first expr)))
              (tag-from-untagged)
              (move 1)
              ,@(cond ((case (first expr)
+                        ((debug) `(,expr))
                         ((halt)
                          `((move ,(* 2 address-width))))
                         ((push)
@@ -372,6 +372,6 @@
 
 ;; CLI
 
-(define example '((push #t) (push ()) (label clob) (push #\a) (jump clob) (push 515) (halt)))
+(define example '((push 24) (label clob) (push #\a) (push #\b) (jump clob) (push 24) (halt)))
 (compile example)
 (newline)
